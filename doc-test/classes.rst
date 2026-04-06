@@ -77,6 +77,26 @@ Chapel classes
         :ytype: eltType
         :yields: Reference to element in vector.
 
+.. function:: getBigNum(): ChplBigNum
+
+    Some function that returns a ChplBigNum. See also
+    :chpl:meth:`ChplBigNum.fromInt` for another way to get a ChplBigNum.
+
+.. function:: writeBigNum(bn: ChplBigNum)
+
+    Some function that takes a ChplBigNum. See also
+    :chpl:meth:`ChplBigNum.readWriteThis` for another way to write a ChplBigNum.
+
+.. function:: readWriteBigNum(bn: ChplBigNum = new ChplBigNum(), f: fileReader)
+
+    Some function that takes a ChplBigNum and a reader/writer. See also
+    :chpl:meth:`ChplBigNum.readWriteThis` for another way to read/write a ChplBigNum.
+
+     :arg ChplBigNum bn: some big num to read/write
+     :arg Reader,Writer f: reader or writer
+     :returns: nothing
+     :rtype: nil
+
 .. record:: ChplBigNum
 
     See also :chpl:class:`ChplVector`...
@@ -110,7 +130,16 @@ Chapel classes
 
         Some method that does something.
 
-.. class:: ClassA:ClassB,ClassC
+.. class:: Parent
+
+
+.. class:: ClassB: Parent
+
+    Some text about ClassA.
+
+.. class:: ClassA: ClassB;ClassC
+
+.. method:: ClassA.method(): Parent
 
 Python classes
 --------------
