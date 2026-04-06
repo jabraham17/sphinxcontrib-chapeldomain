@@ -273,8 +273,6 @@ class ChapelObject(ObjectDescription):
                     ends_open += 1
                     argument = argument[:-1].strip()
                 if argument:
-                    if "Vector" in argument:
-                        print(argument)
                     # try and find the argument type if it exists.
                     colon_loc = argument.find(':')
                     if colon_loc != -1:
@@ -319,8 +317,6 @@ class ChapelObject(ObjectDescription):
             # up and treat the whole argument list as one argument, discarding
             # the already partially populated paramlist node.
             signode += addnodes.desc_parameterlist()
-            if "Vector" in arglist:
-                print(arglist)
             signode[-1] += addnodes.desc_parameter(arglist, arglist)
         else:
             signode += paramlist
@@ -361,8 +357,6 @@ class ChapelObject(ObjectDescription):
                 )
                 pxref['chpl:module'] = self.env.temp_data.get('chpl:module')
                 pxref['chpl:class'] = self.env.temp_data.get('chpl:class')
-                # if rt == "ChplBigNum":
-                #     print("I have return type", pxref)
                 if sep:
                     signode += addnodes.desc_sig_space(', ', ', ')
                 signode += pxref
