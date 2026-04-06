@@ -247,8 +247,7 @@ class ChapelObject(ObjectDescription):
                      names=('throw', 'throws'), can_collapse=True),
     ]
 
-    @staticmethod
-    def _pseudo_parse_arglist(signode, arglist):
+    def _pseudo_parse_arglist(self, signode, arglist):
         """Parse list of comma separated arguments.
 
         Arguments can have optional types.
@@ -274,7 +273,38 @@ class ChapelObject(ObjectDescription):
                     ends_open += 1
                     argument = argument[:-1].strip()
                 if argument:
-                    stack[-1] += addnodes.desc_parameter(argument, argument)
+                    if "Vector" in argument:
+                        print(argument)
+                    # try and find the argument type if it exists.
+                    colon_loc = argument.find(':')
+                    if colon_loc != -1:
+                        name = argument[:colon_loc].strip()
+                        arg_type = argument[colon_loc + 1:].strip()
+                        arg_default = None
+                        eq_loc = arg_type.rfind('=')
+                        if eq_loc != -1:
+                            arg_default = arg_type[eq_loc + 1:].strip()
+                            arg_type = arg_type[:eq_loc].strip()
+                        param = addnodes.desc_parameter(name, name)
+                        param += addnodes.desc_sig_space(': ', ': ')
+                        pxref = addnodes.pending_xref(
+                            arg_type,
+                            nodes.Text(arg_type),
+                            refdomain='chpl',
+                            reftype='type',
+                            reftarget=arg_type.strip(),
+                            refexplicit=True,
+                        )
+                        pxref['chpl:module'] = self.env.temp_data.get('chpl:module')
+                        pxref['chpl:class'] = self.env.temp_data.get('chpl:class')
+                        param += pxref
+                        if arg_default:
+                            param += addnodes.desc_sig_space(' = ', ' = ')
+                            param += addnodes.desc_sig_space(arg_default,
+                                                            arg_default)
+                        stack[-1] += param
+                    else:
+                        stack[-1] += addnodes.desc_parameter(argument, argument)
                 while ends_open:
                     stack.append(addnodes.desc_optional())
                     stack[-2] += stack[-1]
@@ -289,12 +319,14 @@ class ChapelObject(ObjectDescription):
             # up and treat the whole argument list as one argument, discarding
             # the already partially populated paramlist node.
             signode += addnodes.desc_parameterlist()
+            if "Vector" in arglist:
+                print(arglist)
             signode[-1] += addnodes.desc_parameter(arglist, arglist)
         else:
             signode += paramlist
 
-    @staticmethod
     def _handle_signature_suffix(
+        self,
         signode,
         return_intent,
         return_type,
@@ -310,23 +342,42 @@ class ChapelObject(ObjectDescription):
 
         if return_intent:
             signode += addnodes.desc_sig_space(' ', ' ')
-            signode += addnodes.desc_annotation(' ' + return_intent,
+            signode += addnodes.desc_sig_space(' ' + return_intent,
                                                 ' ' + return_intent)
         if return_type:
             signode += addnodes.desc_sig_space(' ', ' ')
-            signode += addnodes.desc_annotation(' : ' + return_type,
-                                                ' : ' + return_type)
+            signode += addnodes.desc_sig_space(': ', ': ')
+            # NOTE: this relies on adjusting chpldoc to return types separated by ";"
+            return_types = [return_type] if ";" not in return_type else [t.strip() for t in return_type.split(";")]
+            sep = None
+            for rt in return_types:
+                pxref = addnodes.pending_xref(
+                    rt,
+                    nodes.Text(rt),
+                    refdomain='chpl',
+                    reftype='type',
+                    reftarget=rt.strip(),
+                    refexplicit=True,
+                )
+                pxref['chpl:module'] = self.env.temp_data.get('chpl:module')
+                pxref['chpl:class'] = self.env.temp_data.get('chpl:class')
+                # if rt == "ChplBigNum":
+                #     print("I have return type", pxref)
+                if sep:
+                    signode += addnodes.desc_sig_space(', ', ', ')
+                signode += pxref
+                sep = True
         if default_value:
             signode += addnodes.desc_sig_space(' ', ' ')
-            signode += addnodes.desc_annotation(default_value,
+            signode += addnodes.desc_sig_space(default_value,
                                                 default_value)
         if throws:
             signode += addnodes.desc_sig_space(' ', ' ')
-            signode += addnodes.desc_annotation(' throws', ' throws')
+            signode += addnodes.desc_sig_space(' throws', ' throws')
         if anno:
-            signode += addnodes.desc_annotation(' ' + anno, ' ' + anno)
+            signode += addnodes.desc_sig_space(' ' + anno, ' ' + anno)
         if where_clause:
-            signode += addnodes.desc_annotation(' ' + where_clause,
+            signode += addnodes.desc_sig_space(' ' + where_clause,
                                                 ' ' + where_clause)
 
     def _get_attr_like_prefix(self, sig):
@@ -483,7 +534,17 @@ class ChapelObject(ObjectDescription):
         # if func_prefix:
         #     signode += addnodes.desc_addname(func_prefix, func_prefix)
         if name_prefix:
-            signode += addnodes.desc_addname(name_prefix, name_prefix)
+            pxref = addnodes.pending_xref(
+                name_prefix.rstrip('.'),
+                nodes.Text(name_prefix),
+                refdomain='chpl',
+                reftype='type',
+                reftarget=name_prefix.rstrip('.').strip(),
+                refexplicit=True,
+            )
+            pxref['chpl:module'] = self.env.temp_data.get('chpl:module')
+            pxref['chpl:class'] = self.env.temp_data.get('chpl:class')
+            signode += pxref
 
         anno = self.options.get('annotation')
 
